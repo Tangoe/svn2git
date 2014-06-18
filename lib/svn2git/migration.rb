@@ -53,6 +53,7 @@ module Svn2Git
       options[:revision] = nil
       options[:username] = nil
       options[:rebasebranch] = false
+	  options[:logwindowsize] = nil
 
       if File.exists?(File.expand_path(DEFAULT_AUTHORS_FILE))
         options[:authors] = DEFAULT_AUTHORS_FILE
@@ -121,6 +122,10 @@ module Svn2Git
           options[:authors] = authors
         end
 
+		opts.on('--log-window-size SIZE', 'Number of log entries to fetch per request. Defaulted to 100.') do |logwindowsize|
+		  options[:logwindowsize] = logwindowsize
+		end
+		
         opts.on('--exclude REGEX', 'Specify a Perl regular expression to filter paths when fetching; can be used multiple times') do |regex|
           options[:exclude] << regex
         end
@@ -172,6 +177,7 @@ module Svn2Git
       exclude = @options[:exclude]
       revision = @options[:revision]
       username = @options[:username]
+	  logwindowsize = @options[:logwindowsize]
 
       if rootistrunk
         # Non-standard repository layout.  The repository root is effectively 'trunk.'
@@ -205,6 +211,10 @@ module Svn2Git
       run_command("#{git_config_command} svn.authorsfile #{authors}") unless authors.nil?
 
       cmd = "git svn fetch "
+	  
+	  unless logwindowsize.nil?
+		cmd += "--log-window-size=#{logwindowsize} "
+	  end
       unless revision.nil?
         range = revision.split(":")
         range[1] = "HEAD" unless range[1]
